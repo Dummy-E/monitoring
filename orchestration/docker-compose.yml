@@ -1,0 +1,35 @@
+version: '3'
+
+services:
+  influxdb:
+    image: influxdb:1.5.2
+    container_name: influxdb
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb-storage:/var/lib/influxdb
+    environment:
+      - INFLUXDB_DB=metrics
+      - INFLUXDB_ADMIN_USER=${DOCKER_INFLUXDB_INIT_USERNAME}
+      - INFLUXDB_ADMIN_PASSWORD=${DOCKER_INFLUXDB_INIT_PASSWORD}
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - INFLUXDB_USER=${DOCKER_INFLUXDB_INIT_USERNAME}
+      - INFLUXDB_PASS=${DOCKER_INFLUXDB_INIT_PASSWORD}
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./influxdb.yml:/etc/grafana/provisioning/datasources/influxdb.yml
+    restart: unless-stopped
+    depends_on:
+      - influxdb
+
+volumes:
+  grafana-storage:
+  influxdb-storage:

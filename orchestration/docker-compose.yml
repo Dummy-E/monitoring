@@ -48,6 +48,58 @@ services:
       - "9100:9100"
     restart: unless-stopped
 
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.6.2
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.ml.enabled=false
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    restart: unless-stopped
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.6.2
+    container_name: kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    restart: unless-stopped
+
+  # filebeat:
+  #   image: docker.elastic.co/beats/filebeat:8.6.2
+  #   container_name: filebeat
+  #   restart: unless-stopped
+  #   user: root  # Required to read system logs
+  #   volumes:
+  #     - /var/lib/docker/containers:/var/lib/docker/containers:ro  # Logs from Docker containers
+  #     - /var/log:/var/log:ro  # System logs from the host
+  #     - ./filebeat.yml:/usr/share/filebeat/filebeat.yml  # Config file for Filebeat
+  #   depends_on:
+  #     - elasticsearch  # Ensure Elasticsearch is running before Filebeat starts
+
+  # IoT Data Ingestion (e.g., Logstash for IoT)
+  # logstash:
+  #  image: docker.elastic.co/logstash/logstash:8.6.2
+  #  container_name: logstash
+  #  environment:
+  #    - LOGSTASH_HTTP_HOST=0.0.0.0
+  #    - ELASTICSEARCH_HOST=http://elasticsearch:9200
+  #  ports:
+  #    - "5044:5044"  # Example of listening port for Beats (Filebeat) or other input plugins
+  #  volumes:
+  #    - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf  # Custom logstash config for IoT ingestion
+  #  depends_on:
+  #    - elasticsearch
+  #  restart: unless-stopped
+
 volumes:
   grafana-storage:
   influxdb-storage:
+  elasticsearch-data:
